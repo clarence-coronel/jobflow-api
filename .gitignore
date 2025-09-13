@@ -3,3 +3,9 @@ node_modules
 .env
 
 /generated/prisma
+
+/src/config/firebaseServiceAccount.json
+
+# Logs
+logs
+*.log

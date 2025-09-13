@@ -1,7 +1,6 @@
 {
   "name": "jobflow-api",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
@@ -12,8 +11,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
     "lodash": "^4.17.21",
     "prisma": "^6.15.0",
+    "winston": "^3.17.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
