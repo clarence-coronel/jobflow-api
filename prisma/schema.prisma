@@ -13,3 +13,18 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id          String   @id @default(uuid())
+  firebaseUid String   @unique
+  field       String?
+  profession  String?
+  email       String   @unique
+  name        String?
+  photoUrl    String? // Google profile picture
+  provider    String   @default("google.com")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("users")
+}
