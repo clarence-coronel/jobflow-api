@@ -1,6 +1,6 @@
 import type { NextFunction, Response, Request } from "express";
 
-import { adminAuth } from "../config/index.js";
+import { adminAuth } from "../config/index.ts";
 import { logger } from "../lib/";
 import { ErrorCodesEnum } from "../enums";
 import { sendError } from "../utils";

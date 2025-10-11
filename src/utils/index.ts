@@ -1,1 +1,1 @@
-export * from "./respose";
+export * from "./response";

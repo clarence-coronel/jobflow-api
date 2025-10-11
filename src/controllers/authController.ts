@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { adminAuth } from "../config/index.js";
+import { prisma } from "../lib/prisma";
+import { adminAuth } from "../config/index.ts";
 import { logger } from "../lib/";
 import { ErrorCodesEnum } from "../enums";
 import { sendError, sendSuccess } from "../utils";
-
-const prisma = new PrismaClient();
 
 export const googleAuth = async (req: Request, res: Response) => {
   try {
@@ -19,10 +17,8 @@ export const googleAuth = async (req: Request, res: Response) => {
         code: ErrorCodesEnum.BAD_REQUEST,
       });
     }
-
     // Verify Firebase Google Sign-In token
     const decodedToken = await adminAuth.verifyIdToken(idToken);
-
     // Check if user signed in with Google
     if (decodedToken.firebase.sign_in_provider !== "google.com") {
       logger.warn("Non-Google sign-in attempt", {
@@ -35,14 +31,11 @@ export const googleAuth = async (req: Request, res: Response) => {
         code: ErrorCodesEnum.BAD_REQUEST,
       });
     }
-
     // Find or create user in database
     let user = await prisma.user.findUnique({
       where: { firebaseUid: decodedToken.uid },
     });
-
     const isNewUser = !user;
-
     if (!user) {
       // New user - create in database
       user = await prisma.user.create({
@@ -51,9 +44,10 @@ export const googleAuth = async (req: Request, res: Response) => {
           email: decodedToken.email!,
           name: decodedToken.name || null,
           photoUrl: decodedToken.picture || null,
-          provider: "google.com",
+          provider: "google",
         },
       });
+
       logger.info("New user created", { userId: user.id, email: user.email });
     } else {
       logger.info("User logged in", { userId: user.id, email: user.email });

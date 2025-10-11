@@ -10,5 +10,5 @@ function getEnv(name: string): string {
   return value;
 }
 
-export const PORT = process.env.PORT || 3000;
+export const PORT = process.env.PORT || 5000;
 export const ENVIRONMENT = process.env.ENVIRONMENT || "development";
