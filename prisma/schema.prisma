@@ -13,17 +13,110 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator zod {
+  provider = "zod-prisma-types"
+  output   = "./zod"
+}
+
+enum JobApplicationStatus {
+  WISHLIST
+  APPLIED
+  INTERVIEWING
+  ACCEPTED
+  REJECTED
+  DROPPED
+}
+
 model User {
-  id          String   @id @default(uuid())
-  firebaseUid String   @unique
-  field       String?
-  profession  String?
-  email       String   @unique
-  name        String?
-  photoUrl    String? // Google profile picture
-  provider    String   @default("google.com")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String           @id @default(uuid())
+  firebaseUid     String           @unique
+  field           String?
+  profession      String?
+  email           String           @unique
+  name            String?
+  photoUrl        String? // Google profile picture
+  provider        String           @default("google.com")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  jobApplications JobApplication[]
+  availableTags   Tag[]
 
   @@map("users")
+}
+
+model RequiredSkill {
+  id                      String         @id @default(uuid())
+  name                    String
+  description             String?
+  yearsOfExperienceNeeded Int?
+  yearsOfExperienceHave   Int?
+  jobApplication          JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId        String         @unique
+  isOptional              Boolean        @default(false)
+  isRequirementMet        Boolean        @default(false)
+
+  @@map("required_skills")
+}
+
+model JobApplicationStatusHistory {
+  id               String               @id @default(uuid())
+  jobApplication   JobApplication       @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String
+  oldStatus        JobApplicationStatus
+  newStatus        JobApplicationStatus
+  changedAt        DateTime             @default(now())
+
+  @@map("job_application_status_history")
+}
+
+model Reminder {
+  id               String         @id @default(uuid())
+  name             String
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String
+  reminderDate     DateTime
+  remindAt         DateTime
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("reminders")
+}
+
+model Tag {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  color           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  jobApplications JobApplication[] @relation("JobApplicationTags")
+
+  @@unique([userId, name]) // prevent duplicate tag names per user
+  @@map("tags")
+}
+
+model JobApplication {
+  id                          String                        @id @default(uuid())
+  title                       String
+  company                     String
+  location                    String?
+  description                 String?
+  status                      JobApplicationStatus          @default(APPLIED)
+  sourceName                  String?
+  sourceUrl                   String?
+  user                        User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                      String
+  resumeUrl                   String?
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+  deletedAt                   DateTime?
+  requiredSkill               RequiredSkill[]
+  jobApplicationStatusHistory JobApplicationStatusHistory[]
+  reminders                   Reminder[]
+  tags                        Tag[]                         @relation("JobApplicationTags")
+  order                       Int                           @default(0)
+
+  @@unique([userId, status, order])
+  @@map("job_applications")
 }

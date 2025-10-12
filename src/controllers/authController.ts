@@ -37,17 +37,24 @@ export const googleAuth = async (req: Request, res: Response) => {
     });
     const isNewUser = !user;
     if (!user) {
-      // New user - create in database
+      // Create new user + default tags
       user = await prisma.user.create({
         data: {
           firebaseUid: decodedToken.uid,
           email: decodedToken.email!,
           name: decodedToken.name || null,
           photoUrl: decodedToken.picture || null,
-          provider: "google",
+          provider: "google.com",
+          availableTags: {
+            create: [
+              { name: "Remote", color: "#4CAF50" },
+              { name: "Hybrid", color: "#FFC107" },
+              { name: "Onsite", color: "#2196F3" },
+            ],
+          },
         },
+        include: { availableTags: true },
       });
-
       logger.info("New user created", { userId: user.id, email: user.email });
     } else {
       logger.info("User logged in", { userId: user.id, email: user.email });

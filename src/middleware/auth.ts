@@ -1,7 +1,7 @@
 import type { NextFunction, Response, Request } from "express";
-
-import { adminAuth } from "../config/index.ts";
-import { logger } from "../lib/";
+import { adminAuth } from "../config";
+import { prisma } from "../lib/prisma";
+import { logger } from "../lib";
 import { ErrorCodesEnum } from "../enums";
 import { sendError } from "../utils";
 
@@ -12,7 +12,7 @@ export async function authenticateToken(
 ) {
   const authHeader = req.headers.authorization;
 
-  //    Check for Bearer token
+  // Check for Bearer token
   if (!authHeader?.startsWith("Bearer ") || !authHeader.split(" ")[1]) {
     logger.warn("No token provided");
     sendError({
@@ -24,12 +24,36 @@ export async function authenticateToken(
     return;
   }
 
-  //   Already checked token exists
-  const token = authHeader.split(" ")[1] as string;
+  const token = authHeader.split(" ")[1];
 
   try {
+    // Verify Firebase token
     const decodedToken = await adminAuth.verifyIdToken(token);
-    req.user = decodedToken; // attach user info
+
+    // Find matching user in your database
+    const user = await prisma.user.findUnique({
+      where: { firebaseUid: decodedToken.uid },
+      select: { id: true },
+    });
+
+    if (!user) {
+      logger.warn("User not found in database", {
+        firebaseUid: decodedToken.uid,
+      });
+
+      sendError({
+        response: res,
+        message: "User not found",
+        statusCode: 401,
+        code: ErrorCodesEnum.UNAUTHORIZED,
+      });
+
+      return;
+    }
+
+    // Attach both decoded token + internal user ID
+    req.user = { ...decodedToken, id: user.id };
+
     next();
   } catch (err) {
     logger.error("Token verification failed", { error: err });
