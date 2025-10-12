@@ -21,7 +21,7 @@ generator zod {
 enum JobApplicationStatus {
   WISHLIST
   APPLIED
-  INTERVIEWING
+  ONGOING
   ACCEPTED
   REJECTED
   DROPPED
